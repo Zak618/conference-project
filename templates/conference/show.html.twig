@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %} {{ conference }} {% endblock %}
+
+{% block body %}
+    <h2>{{ conference }}</h2>
+
+    {% if comments|length > 0 %}
+        {% for comment in comments %}
+            {% if comment.photoFilename %}
+                <img src="{{asset('uploads/photos/' ~ comment.photoFilename)}} style='max-width: 200px'" />
+            {% endif %}
+
+            <h4>{{ comment.author }}</h4>
+            <small>
+                {{ comment.createdAt|format_datetime('medium', 'short') }}
+            </small>
+
+            <p>{{ comment.text }}</p>
+        {% endfor %}
+    {% else %}
+        <div>Оставьте первый комментарий для данной конференции.</div>
+    {% endif %}
+
+{% endblock %}
