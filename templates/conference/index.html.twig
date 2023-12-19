@@ -7,5 +7,9 @@
 
     {% for conference in conferences %}
         <h4>{{ conference }}</h4>
+
+        <p>
+            <a href="{{ path('conference', { id:conference.id }) }}">Смотреть</a>
+        </p>
     {% endfor %}
 {% endblock %}
