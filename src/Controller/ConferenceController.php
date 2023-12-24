@@ -14,6 +14,7 @@ use App\Form\CommentType;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\Entity;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class ConferenceController extends AbstractController
 {
@@ -32,7 +33,12 @@ class ConferenceController extends AbstractController
     }
 
     #[Route('/conference/{slug}', name: 'conference')]
-    public function show(Request $request, Conference $conference, CommentRepository $commentRepository, ConferenceRepository $conferenceRepository): Response
+    public function show(Request $request, 
+    Conference $conference, 
+    CommentRepository $commentRepository, 
+    ConferenceRepository $conferenceRepository,
+    #[Autowire('%photo_dir%')] string $photoDir, 
+    ): Response
     {
         $comment = new Comment();
         $form = $this->createForm(CommentType::class, $comment);
@@ -40,6 +46,12 @@ class ConferenceController extends AbstractController
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $comment->setConference($conference);
+            
+            if ($photo = $form['photo']->getData()) {
+                $filename = bin2hex(random_bytes(6)).'.'.$photo->guessExtension();
+                $photo->move($photoDir, $filename);
+                $comment->setPhotoFilename($filename);
+            }
 
             $this->entityManager->persist($comment);
             $this->entityManager->flush();
