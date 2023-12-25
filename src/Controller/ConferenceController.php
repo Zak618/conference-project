@@ -11,16 +11,20 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use App\Entity\Conference;
 use App\Form\CommentType;
+use App\Message\CommentMessage;
 use App\SpamChecker;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\Entity;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Messenger\MessageBus;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 class ConferenceController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
+        private MessageBusInterface $bus,
     )
     {
     }
@@ -37,7 +41,6 @@ class ConferenceController extends AbstractController
     public function show(Request $request, 
     Conference $conference, 
     CommentRepository $commentRepository, 
-    SpamChecker $spamChecker,
     ConferenceRepository $conferenceRepository,
     #[Autowire('%photo_dir%')] string $photoDir, 
     ): Response
@@ -56,6 +59,7 @@ class ConferenceController extends AbstractController
             }
 
             $this->entityManager->persist($comment);
+            $this->entityManager->flush();
 
             $context = [
                 'user_ip' => $request->getClientIp(),
@@ -64,11 +68,7 @@ class ConferenceController extends AbstractController
                 'permalink' => $request->getUri(),
             ];
 
-            if (2 === $spamChecker->getSpamScore($comment, $context)) {
-                throw new \RuntimeException('Это спам!');
-            }
-
-            $this->entityManager->flush();
+            $this->bus->dispatch(new CommentMessage($comment->getId(), $context));
 
             return $this->redirectToRoute('conference', ['slug' => $conference->getSlug()]);
         }
