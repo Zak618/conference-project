@@ -38,6 +38,9 @@ class Comment
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $photoFilename = null;
 
+    #[ORM\Column(length: 255, options: ['default' => 'submitted'])]
+    private ?string $state = 'submitted';
+
     public function getId(): ?int
     {
         return $this->id;
@@ -117,6 +120,18 @@ class Comment
     public function setPhotoFilename(?string $photoFilename): static
     {
         $this->photoFilename = $photoFilename;
+
+        return $this;
+    }
+
+    public function getState(): ?string
+    {
+        return $this->state;
+    }
+
+    public function setState(string $state): static
+    {
+        $this->state = $state;
 
         return $this;
     }
